@@ -1,0 +1,43 @@
+{{ range $i, $schedules := .Values.scaledDeployments -}}
+{{ $scheduleName := .name  }}
+{{ $target := .target }}
+{{ range $idx, $schedule := .schedules -}}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ template "time-based-scaling.fullname" $ }}-{{ $scheduleName }}-{{ .name }}
+  labels:
+    app: {{ template "time-based-scaling.name" $ }}
+    chart: {{ $.Chart.Name }}-{{ $.Chart.Version | replace "+" "_" }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+spec:
+  concurrencyPolicy: Replace
+  failedJobsHistoryLimit: 3
+  schedule: {{ $schedule.schedule | quote }}
+  successfulJobsHistoryLimit: 3 # default
+  suspend: false
+
+  jobTemplate:
+    metadata:
+      labels:
+        app: {{ template "time-based-scaling.name" $ }}
+        scheduleGroup: {{ $scheduleName }}
+        scheduleName: {{ $schedule.name }}
+        release: {{ $.Release.Name }}
+    spec:
+      template:
+        spec:
+          containers:
+          - name: rescaler
+            image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+            args:
+            - scale
+            - deploy/{{ $target }}
+            - --replicas={{ $schedule.replicas }}
+          restartPolicy: OnFailure
+          serviceAccountName: {{ template "time-based-scaling.fullname" $ }}
+
+---
+{{ end -}}
+{{ end -}}

@@ -1,0 +1,24 @@
+scaledDeployments:
+  - name: target1
+    target: deploy1
+    schedules:
+      - name: start
+        schedule: "0 13 * * 1-5" # 8am CDT
+        replicas: 1
+      - name: stop
+        schedule: "0 22 * * 1-5" # 5pm CDT
+        replicas: 0
+  - name: target2
+    target: deploy2
+    schedules:
+      - name: start
+        schedule: "0 13 * * 1-5" # 8am CDT
+        replicas: 1
+      - name: stop
+        schedule: "0 22 * * 1-5" # 5pm CDT
+        replicas: 0
+image:
+  repository: lachlanevenson/k8s-kubectl
+  tag: v1.10.6
+  pullPolicy: IfNotPresent
+suspend: False
